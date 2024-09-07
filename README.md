@@ -1,6 +1,13 @@
-# SessionEncryptor Project
+# SessionEncryptor Library
 
-This project provides a secure method for encrypting and decrypting sensitive data between a client and a server using RSA encryption. The encryption is performed on the client side using JavaScript, while decryption occurs on the server side using PHP. 
+## Overview
+
+The `SessionEncryptor` library provides a secure method for encrypting and decrypting sensitive data transmitted between a client (using JavaScript) and a server (using PHP). This library leverages a combination of RSA and AES encryption techniques to ensure secure communication. The RSA encryption is used to securely transmit a symmetric AES key, which is then used to encrypt and decrypt the actual data.
+
+The project consists of two main components:
+
+1. **JavaScript Client (`Encryptor` Class):** Handles encryption of data on the client side.
+2. **PHP Server (`SessionEncryptor` Class):** Manages key generation and decryption on the server side.
 
 ## Table of Contents
 
@@ -13,17 +20,10 @@ This project provides a secure method for encrypting and decrypting sensitive da
   - [JavaScript Methods](#javascript-methods)
   - [PHP Methods](#php-methods)
 - [Example Usage](#example-usage)
+  - [JavaScript Example](#javascript-example)
+  - [PHP Example](#php-example)
 - [Security Considerations](#security-considerations)
 - [Troubleshooting](#troubleshooting)
-
-## Overview
-
-The `SessionEncryptor` and `Encryptor` classes work together to ensure that sensitive data is securely transmitted from the client to the server. The flow of data is as follows:
-
-1. The server generates an RSA public-private key pair using the `SessionEncryptor` class.
-2. The public key is sent to the client and stored in a cookie.
-3. The client-side `Encryptor` class encrypts sensitive data using the public key.
-4. The encrypted data is sent back to the server, where it is decrypted using the private key.
 
 ## Setup
 
@@ -65,13 +65,13 @@ To secure the transmission of data, it's important to use SSL (HTTPS) on your se
 ### JavaScript Setup
 
 1. **Include the `Encryptor` Class**:
-   - Load the `encryptor.js` file in your HTML:
+   - Load the `Encryptor` class in your HTML:
      ```html
      <script src="path/to/encryptor.js"></script>
      ```
 
 2. **Load Required Libraries**:
-   - The `Encryptor` class dynamically loads the necessary cryptographic library (node-forge). Ensure the internet connection is available when the page loads, or host the library locally.
+   - The `Encryptor` class dynamically loads the necessary cryptographic libraries (`crypto-js` and `node-forge`). Ensure the internet connection is available when the page loads, or host the library locally.
 
 ### PHP Setup
 
@@ -91,82 +91,133 @@ To secure the transmission of data, it's important to use SSL (HTTPS) on your se
 
 ### JavaScript Methods
 
-#### `Encryptor.initialize(secretKey)`
-- **Description**: Loads the required cryptographic libraries and initializes the `Encryptor` class.
-- **Parameters**:
-  - `secretKey` (string): The secret key used for symmetric encryption.
-- **Returns**: A promise that resolves to an instance of `Encryptor`.
+1. **`Encryptor.initialize(secretKey)`**
+   - **Description**: Loads the required cryptographic libraries and initializes the `Encryptor` class.
+   - **Parameters**:
+     - `secretKey` (string): The secret key used for symmetric encryption.
+   - **Returns**: A promise that resolves to an instance of `Encryptor`.
 
-#### `Encryptor.encryptSecretKey(secretKey, publicKeyPem)`
-- **Description**: Encrypts the secret key using the RSA public key.
-- **Parameters**:
-  - `secretKey` (string): The secret key to encrypt.
-  - `publicKeyPem` (string): The public key in PEM format.
-- **Returns**: A promise that resolves to the encrypted secret key (base64 encoded).
+2. **`Encryptor.encryptSecretKey(secretKey, publicKeyPem)`**
+   - **Description**: Encrypts the secret key using the RSA public key.
+   - **Parameters**:
+     - `secretKey` (string): The secret key to encrypt.
+     - `publicKeyPem` (string): The public key in PEM format.
+   - **Returns**: A promise that resolves to the encrypted secret key (base64 encoded).
 
-#### `Encryptor.encrypt(data)`
-- **Description**: Encrypts sensitive data using the symmetric secret key.
-- **Parameters**:
-  - `data` (string): The data to encrypt.
-- **Returns**: The encrypted data (base64 encoded).
+3. **`Encryptor.encrypt(data)`**
+   - **Description**: Encrypts sensitive data using the symmetric secret key.
+   - **Parameters**:
+     - `data` (string): The data to encrypt.
+   - **Returns**: The encrypted data (base64 encoded).
 
-#### `Encryptor.main()`
-- **Description**: Main function that orchestrates the encryption process, including retrieving the public key from cookies, encrypting the secret key, and sending encrypted data to the server.
+4. **`Encryptor.sendSecureData(method, location, data)`**
+   - **Description**: Encrypts data and sends it securely to the server.
+   - **Parameters**:
+     - `method` (string): HTTP method (`GET`, `POST`, etc.).
+     - `location` (string): Server endpoint URL.
+     - `data` (object): Data to send.
+   - **Returns**: Server response.
+
+5. **`Encryptor.getSecureData(location)`**
+   - **Description**: Retrieves and decrypts data from the server.
+   - **Parameters**:
+     - `location` (string): Server endpoint URL.
+   - **Returns**: Decrypted data.
 
 ### PHP Methods
 
-#### `SessionEncryptor->__construct()`
-- **Description**: Initializes the `SessionEncryptor` class, generating a new RSA key pair and storing the private key on the server. The public key is sent to the client via a cookie.
+1. **`SessionEncryptor->__construct($sslConfigPath)`**
+   - **Description**: Initializes the `SessionEncryptor` class, generating a new RSA key pair and storing the private key on the server. The public key is sent to the client via a cookie.
+   - **Parameters**:
+     - `$sslConfigPath` (string): Path to the OpenSSL configuration file.
 
-#### `SessionEncryptor->generateKeys()`
-- **Description**: Generates an RSA public-private key pair. The private key is stored in the session, and the public key is set as a cookie.
+2. **`SessionEncryptor->decryptSecretKey($encryptedSecretKey)`**
+   - **Description**: Decrypts the secret key using the private key stored in the session.
+   - **Parameters**:
+     - `$encryptedSecretKey` (string): The encrypted secret key (base64 encoded).
+   - **Returns**: The decrypted secret key.
 
-#### `SessionEncryptor->decrypt($encryptedData)`
-- **Description**: Decrypts data sent from the client using the stored private key.
-- **Parameters**:
-  - `encryptedData` (string): The data to decrypt.
-- **Returns**: The decrypted data (original plain text).
+3. **`SessionEncryptor->decryptData($cipherText, $secretKey)`**
+   - **Description**: Decrypts data using the symmetric secret key.
+   - **Parameters**:
+     - `$cipherText` (string): The encrypted data (base64 encoded).
+     - `$secretKey` (string): The symmetric secret key.
+   - **Returns**: The decrypted data.
 
-### Example Usage
+4. **`SessionEncryptor->getPublicKey()`**
+   - **Description**: Returns the public key in PEM format.
+   - **Returns**: Public key (string).
 
-#### **JavaScript Example (`encryptor.js`)**
+5. **`SessionEncryptor->get_secured_data($method, $callback)`**
+   - **Description**: Retrieves and decrypts data from the request, then calls a callback function with the decrypted data.
+   - **Parameters**:
+     - `$method` (string): HTTP method (`GET` or `POST`).
+     - `$callback` (callable): Callback function to handle the decrypted data.
+
+## Example Usage
+
+### JavaScript Example
 
 ```javascript
 (async () => {
+    const secretKey = 'your-very-secret-key';
+    const encryptor = await Encryptor.initialize(secretKey);
+    
+    // Sending encrypted data
+    const response = await encryptor.sendSecureData('POST', '/se_test.php', { message: 'Hello, World!' });
+    console.log('Server Response:', response);
+
+    // Retrieving and decrypting data securely from the server
     try {
-        await Encryptor.main();
+        const data = await encryptor.getSecureData('/ge_test.php');
+        console.log('Retrieved and Decrypted Data:', data);
     } catch (error) {
-        console.error('Encryption failed:', error);
+        console.error('Failed to retrieve secure data:', error);
     }
 })();
 ```
 
-#### **PHP Example (`encryption_server.php`)**
+### PHP Example
 
 ```php
 <?php
-require_once 'SessionEncryptor.php';
+require 'SessionEncryptor.php';
 
-try {
-    $sessionEncryptor = new SessionEncryptor();
-    $data = json_decode(file_get_contents('php://input'), true);
-    
-    $decryptedSecretKey = $sessionEncryptor->decrypt($data['encryptedSecretKey']);
-    $decryptedData = openssl_decrypt($data['encryptedData'], 'aes-256-cbc', $decryptedSecretKey, 0, 'iviviviviviviviv');
-    
-    echo 'Decrypted Data: ' . $decryptedData;
-} catch (Exception $e) {
-    echo 'Decryption failed: ' . $e->getMessage();
+// Initialize SessionEncryptor
+$encryptor = new SessionEncryptor('c:\\xampp\\apache\\conf\\openssl.cnf');
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    // Send public key to the client via a cookie
+    $publicKey = $encryptor->getPublicKey();
+    $encodedPublicKey = base64_encode($publicKey);
+    setcookie('public_key', $encodedPublicKey, 0, "/"); // Cookie expires at end of session
+    echo json_encode(['publicKey' => $encodedPublicKey]); 
 }
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Handle the incoming secure data
+    $encryptor->get_secured_data('POST', function ($decryptedData, $error) {
+        if ($error) {
+            echo "Error: $error";
+        } else {
+            echo 'Decrypted Data: ';
+            print_r($decryptedData);
+        }
+    });
+}
+?>
 ```
 
-### Security Considerations
+## Security Considerations
 
 - **Use HTTPS**: Always serve your website over HTTPS to prevent man-in-the-middle attacks.
 - **Key Storage**: Never store the private key on the client. The private key should always be kept secure on the server.
 - **Cookie Security**: Ensure cookies that store sensitive data (like the public key) are marked as `HttpOnly` and `Secure`.
 
-### Troubleshooting
+## Troubleshooting
 
 - **Invalid Key Error**: Ensure the private key is correctly generated and matches the public key sent to the client.
 - **OpenSSL Configuration Errors**: If OpenSSL cannot find its configuration file, specify the correct path using the `config` parameter.
+- **Decryption Issues**: If decryption fails, ensure that the encrypted data and key are correctly transmitted without modification.
+
+This setup provides a comprehensive guide to securely encrypt and decrypt data between a client and server using JavaScript and PHP.
