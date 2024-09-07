@@ -170,23 +170,3 @@ class Encryptor {
     
     
 }
-
-// Example usage
-(async () => {
-    const secretKey = 'your-very-secret-key';
-    const encryptor = await Encryptor.initialize(secretKey);
-    const response = await encryptor.sendSecureData('POST', '/se_test.php', { message: 'Hello, World!' });
-    console.log('Server Response:', response);
-
-    
-    try {
-        // Retrieve and decrypt data securely from the server
-        const data = await encryptor.getSecureData('/ge_test.php');
-        
-        // Use the decrypted data as needed
-        console.log('Retrieved and Decrypted Data:', data);
-    } catch (error) {
-        console.error('Failed to retrieve secure data:', error);
-    }   
-    
-})();
